@@ -1,0 +1,20 @@
+<html>
+<head>
+    <title>FlickrDown Build Readme</title>
+</head>
+<body>
+<h1>FlickrDown Build Readme</h1>
+<h2>Requirements / Prerequisites:</h2>
+<h3>.NET 2.0:</h3>
+<p>Flickrdown was created with .NET 2.0.  You'll need at least .NET 2.0 to build and run it</P>
+<h3>VC# 2005 Express:</h3>
+<p>Flickrdown was built with VC# 2005 Express which is available for free from <a href="http://msdn.microsoft.com/vstudio/express/visualcsharp/">here</a></p>
+<h3>Flickr.NET:</h3>
+<p>FlickrDown uses the Flickr.NET API which last I checked you could download <a href="http://www.wackylabs.net/flickr/flickr-api/">here</a>.  The default project references it direclty from drive D:\libs\flickrnet\...  I should fix that at some point.  It also requires the FlickrNet.dll to be in the executable folder (bin/Release)</p>
+<p>At the time I wrote this readme I was using version 1.4.3. I used a custom version of because it was missing some features.  I'm not sure of all the requirements requires to distribute that custom version. Hopefully my changes will be in 1.4.4 or something.  For now, the file with the changes is included here under the Flickr.NET folder so you can do a diff if you need to</p>
+<h3>Astrum InstallWizard:</h3>
+<p>The installer is created by <a href="http://www.thraexsoftware.com/aiw/">Astrum Installwizard</a>.  The input to that program is in the Flickrdown.ai2 file.  Astrum Installwizard ROCKS.  It has almost ZERO learning curve unlike all the other installation software that uses scripts and it covers 99% of all install needs.  Sure it costs $89 but my time is worth far far more than $89 it cost me to buy it.  Free is not always better</p>
+<p>Sourceforge bitched about many of the files I checked in because it's still using suck ass CVS.  I didn't like any of the XML files since they had non ASCII in them and when I used WinCVS to tell it they were unicode it said "server does not support unicode".  I think Sourceforge is doing a great service providing for open source projects.  I hope they find the time up upgrade to subversion soon.</p>
+<h2>Organization Notes:</h2>
+<p>FlickrDown is a very simple program.  The basic thing to get is that it uses an WebBrowser control to display it's main interface. This is much easier to deal IMO than actual .NET controls.  For example it's much easier to style stuff in HTML and CSS than writing custom draw functions for a custom control IMO. Any function made public by the form using the WebBrowser control (MainForm.cs) is callable from Javascript and as well, C# can call any Javascript function in the WebBrowser so it's pretty simple to communicate back and forth between the two.</p>
+</body>
