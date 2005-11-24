@@ -29,9 +29,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="FlickrNet, Version=1.0.0.1, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="FlickrNet, Version=1.4.3.30453, Culture=neutral, PublicKeyToken=2491df59efa5d132, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\libs\FlickrNet\bin\Release\FlickrNet.dll</HintPath>
+      <HintPath>bin\Release\FlickrNet.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
