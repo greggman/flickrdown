@@ -404,11 +404,13 @@ namespace FlickrDown
                 foreach (DLPhoto dlp in _curDLPhotos)
                 {
                     string dstFolder = Path.Combine(_destFolder, Util.MakeFilenameSafe(dlp.photoSetName));
-                    string src  = "http://photos" + dlp.photo.Server + ".flickr.com/" + dlp.photo.PhotoId + "_" + dlp.photo.Secret + "_o.jpg";
+//                  string src  = "http://photos" + dlp.photo.Server + ".flickr.com/" + dlp.photo.PhotoId + "_" + dlp.photo.Secret + "_o.jpg";
+                    string src  = dlp.photo.OriginalUrl;
                     string dst  = Path.Combine(dstFolder, Util.MakeFilenameSafe(dlp.photo.Title));
-                    if (Path.GetExtension(dst).ToLower().CompareTo(".jpg") != 0)
+                    string ext  = ".jpg"; // dlp.photo.OriginalFormat
+                    if (Path.GetExtension(dst).ToLower().CompareTo(ext) != 0)
                     {
-                        dst = dst + ".jpg";
+                        dst = dst + ext;
                     }
 
                     if (bgw.CancellationPending)
