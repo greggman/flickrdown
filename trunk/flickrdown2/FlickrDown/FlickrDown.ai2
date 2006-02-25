@@ -1,7 +1,7 @@
 <aiw2project project-file-version="6">
   <cs-general>
     <application-name value="FlickrDown" />
-    <application-version value="2.10" />
+    <application-version value="2.20" />
     <company-name value="Greggman" />
     <install-path value="&lt;ProgramFiles&gt;\&lt;AppName&gt;" reg-root-key="2" reg-path="Software\&lt;CompanyName&gt;\&lt;AppName&gt;" read-from-registry="1" reg-value="Directory" />
     <shortcut-path value="&lt;AppName&gt;" all-users-start-menu="0" />

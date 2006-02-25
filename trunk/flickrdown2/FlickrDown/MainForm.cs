@@ -784,17 +784,26 @@ namespace FlickrDown
                     int photoNdx = 0;
                     foreach (Photo ph in pc)
                     {
-//                        string pageURL = String.Format("http://flickr.com/photos/{0}/{1}/"
-//                                                       ,removeSpaces(_curUser.UserName)
-//                                                       ,ph.PhotoId
-//                                                       );
+                        string userId = ph.UserId;
+                        if (ph.UserId == null || ph.UserId.Length == 0)
+                        {
+                            if (_curUser != null)
+                            {
+                                userId = _curUser.UserId;
+                            }
+                        }
+//                        string pageURL = ph.WebUrl;
+                        string pageURL = String.Format("http://flickr.com/photos/{0}/{1}/"
+                                                       ,userId
+                                                       ,ph.PhotoId
+                                                       );
                         sb.Append(
                             String.Format(
                                 "<div class=\"thumb1\"><div class=\"thumb2\"><div class=\"thumb3\"><a href=\"{3}\" target=\"_blank\"><img src=\"{0}\" width=\"64\" height=\"64\"/></a><br/><input type=\"checkbox\" onclick=\"checkphoto()\" id=\"check{1:d5}_{2}\"/></div></div></div>"
                                 , ph.SquareThumbnailUrl
                                 , ndx
                                 , photoNdx
-                                , ph.WebUrl
+                                , pageURL
                                 ));
                         photoNdx++;
                     }
