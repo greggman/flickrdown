@@ -292,7 +292,7 @@ namespace FlickrDown
             try
             {
                 _curTags = tags;
-                _curTagPhotos = _fapi.PhotosSearch(tags, TagMode.AllTags, "", 100, 1);
+                _curTagPhotos = _fapi.PhotosSearch(tags, TagMode.AllTags, "", 500, 1);
                 if (_curTagPhotos.PhotoCollection.Length == 0)
                 {
                     MessageBox.Show(this, "There are no photos that match these tags");
@@ -405,9 +405,15 @@ namespace FlickrDown
                 {
                     string dstFolder = Path.Combine(_destFolder, Util.MakeFilenameSafe(dlp.photoSetName));
 //                  string src  = "http://photos" + dlp.photo.Server + ".flickr.com/" + dlp.photo.PhotoId + "_" + dlp.photo.Secret + "_o.jpg";
-                    string src  = dlp.photo.OriginalUrl;
-                    string dst  = Path.Combine(dstFolder, Util.MakeFilenameSafe(dlp.photo.Title));
-                    string ext  = ".jpg"; // dlp.photo.OriginalFormat
+//                  string src  = dlp.photo.OriginalUrl;
+                    string origExt = "jpg";
+                    if (dlp.photo.OriginalFormat != null)
+                    {
+                        origExt = dlp.photo.OriginalFormat;
+                    }
+                    string src = "http://static.flickr.com/" + dlp.photo.Server + "/" + dlp.photo.PhotoId + "_" + dlp.photo.Secret + "_o." + origExt;
+                    string dst = Path.Combine(dstFolder, Util.MakeFilenameSafe(dlp.photo.Title));
+                    string ext = "." + origExt;
                     if (Path.GetExtension(dst).ToLower().CompareTo(ext) != 0)
                     {
                         dst = dst + ext;
@@ -601,7 +607,7 @@ namespace FlickrDown
                             else
                             {
                                 //_curPhotos = _fapi.PeopleGetPublicPhotos(_curUser.UserId, 100, 1);
-                                _curPhotos = _fapi.PhotosSearch(_curUser.UserId, "", TagMode.AllTags, "", DateTime.MinValue, DateTime.MinValue, 0, 100, 1, PhotoSearchExtras.All);
+                                _curPhotos = _fapi.PhotosSearch(_curUser.UserId, "", TagMode.AllTags, "", DateTime.MinValue, DateTime.MinValue, 0, 500, 1, PhotoSearchExtras.All);
                                 pc = _curPhotos.PhotoCollection;
                             }
                         }
@@ -684,7 +690,7 @@ namespace FlickrDown
 
                         if (pc == null && bChecked)
                         {
-                            _curGroupPhotos[ii] = _fapi.GroupPoolGetPhotos(pi.GroupId, 100, 1);
+                            _curGroupPhotos[ii] = _fapi.GroupPoolGetPhotos(pi.GroupId, 500, 1);
                             pc = _curGroupPhotos[ii].PhotoCollection;
                         }
 
@@ -742,8 +748,8 @@ namespace FlickrDown
                     {
                         if (_curPhotos == null)
                         {
-                            //_curPhotos = _fapi.PeopleGetPublicPhotos(_curUser.UserId, 100, 1);
-                            _curPhotos = _fapi.PhotosSearch(_curUser.UserId, "", TagMode.AllTags, "", DateTime.MinValue, DateTime.MinValue, 0, 100, 1, PhotoSearchExtras.All);
+                            //_curPhotos = _fapi.PeopleGetPublicPhotos(_curUser.UserId, 500, 1);
+                            _curPhotos = _fapi.PhotosSearch(_curUser.UserId, "", TagMode.AllTags, "", DateTime.MinValue, DateTime.MinValue, 0, 500, 1, PhotoSearchExtras.All);
                         }
                         pc = _curPhotos.PhotoCollection;
                     }
@@ -770,7 +776,7 @@ namespace FlickrDown
                     {
                         PoolInfo pi = _curPoolGroups.GroupsCollection[ndx];
 
-                        _curGroupPhotos[ndx] = _fapi.GroupPoolGetPhotos(pi.GroupId, 100, 1);
+                        _curGroupPhotos[ndx] = _fapi.GroupPoolGetPhotos(pi.GroupId, 500, 1);
                         pc = _curGroupPhotos[ndx].PhotoCollection;
                     }
                 }
