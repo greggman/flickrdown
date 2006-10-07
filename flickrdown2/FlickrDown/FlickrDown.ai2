@@ -1,7 +1,7 @@
 <aiw2project project-file-version="6">
   <cs-general>
     <application-name value="FlickrDown" />
-    <application-version value="2.30" />
+    <application-version value="2.40" />
     <company-name value="Greggman" />
     <install-path value="&lt;ProgramFiles&gt;\&lt;AppName&gt;" reg-root-key="2" reg-path="Software\&lt;CompanyName&gt;\&lt;AppName&gt;" read-from-registry="1" reg-value="Directory" />
     <shortcut-path value="&lt;AppName&gt;" all-users-start-menu="0" />
@@ -86,6 +86,7 @@
     <installation-item name="Application files" description="Minimum files required for the application to run." flags="1">
       <files>
         <folder value="." relative="1" expanded="1">
+          <file runtime-location="" name="combobox.htc" destination-modified="0" destination="&lt;InstallDir&gt;" reg-priority="1" overwrite-mode="0" attributes="97" />
           <file runtime-location="" name="help.html" destination-modified="0" destination="&lt;InstallDir&gt;" reg-priority="1" overwrite-mode="0" attributes="97" />
           <file runtime-location="" name="mainform.html" destination-modified="0" destination="&lt;InstallDir&gt;" reg-priority="1" overwrite-mode="0" attributes="97" />
           <file runtime-location="" name="readme.html" destination-modified="0" destination="&lt;InstallDir&gt;" reg-priority="1" overwrite-mode="0" attributes="97" />
@@ -210,7 +211,7 @@
     <last-bc-image-path value="" />
     <last-dll-path value="" />
     <last-text-file-path value="" />
-    <last-files-path value="D:\work\FlickrDown\FlickrDown\bin\Release\" />
+    <last-files-path value="D:\work\flickrdown\trunk\flickrdown2\FlickrDown\" />
     <last-slide-image-path value="" />
     <active-theme value="Windows XP theme" />
   </internal>

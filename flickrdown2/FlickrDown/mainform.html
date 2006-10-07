@@ -1,5 +1,5 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-<html>
+<html xmlns:DEADBEEF>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <title>Flickrdown Main Form</title>
@@ -55,6 +55,7 @@ fieldset {
 .setsumei {
   font-size: xx-small;
   }
+DEADBEEF\:combobox {behavior: url(combobox.htc); }
 </style>
 <script language="javascript">
 var numChecked = 0;
@@ -146,13 +147,39 @@ function getcheck(checkid)
     }
     return "0";
 }
-function clearlist(listname)
+function addoption(listname, name, value, selected)
+{
+   var lSelect = document.getElementById(listname);
+   var oOption = document.createElement("OPTION");
+
+   lSelect.options.add(oOption);
+   oOption.innerText = name;
+   oOption.value = value;
+
+   if (selected)
+   {
+      oOption.selected = true;
+   }
+}
+function clearoptions(listname)
+{
+    var tbody = document.getElementById(listname);
+    while (tbody.options.length > 0)
+    {
+        tbody.options.remove(0);
+    }
+}
+function clearchildren(listname)
 {
     var tbody = document.getElementById(listname);
     while (tbody.childNodes.length > 0)
     {
         tbody.removeChild(tbody.firstChild);
     }
+}
+function clearlist(listname)
+{
+    clearchildren(listname);
     var fstbody = document.getElementById("fieldset" + listname);
     fstbody.disabled = true;
     numChecked = false;
@@ -277,6 +304,11 @@ function initform()
 {
     DisableDownload();
     clearlist("listtbody");
+//  document.all.searchinfo.value = "abc";
+//  addoption("searchinfo", "goober", 0, false);
+//  addoption("searchinfo", "booger goober", 1, false);
+//  addoption("searchinfo", "foober", 2, false);
+//  addoption("searchinfo", "pdlede", 3, false);
 }
 </script>
 </head>
@@ -289,7 +321,8 @@ function initform()
 <fieldset>
 <legend>Search</legend>
 <label for="searchinfo">Enter a flickr username, e-mail address, tags or group name</label><br/>
-<input class="text" type="TEXT" id="searchinfo" name="searchinfo" /><br/>
+<DEADBEEF:combobox name="searchinfo" id="searchinfo" size=50>
+</DEADBEEF:combobox>
 <div class="option">
 <div><input type="radio" id="username" value="username" name="searchtype" checked><label for="username">username</label></div>
 <div><input type="radio" id="e-mail" value="e-mail" name="searchtype"><label for="e-mail">e-mail</label></div>
@@ -310,7 +343,9 @@ function initform()
 <fieldset id="fieldsetdest">
 <legend>Destination</LEGEND>
 <label for="destfolder">Folder to store photosets</label><br/>
-<input class="text" type="TEXT" id="destfolder" name="destfolder" /><input class="button" type="button" value="Browse..." onclick="GetFolder('destfolder')" /><br/>
+<DEADBEEF:combobox name="destfolder" id="destfolder" size=50>
+</DEADBEEF:combobox>
+<input class="button" type="button" value="Browse..." onclick="GetFolder('destfolder')" /><br/>
 </fieldset>
 <hr/>
 <input  id="fieldsetdownload" class="button" type="button" value="Download" onclick="DownloadSets('destfolder')" /><br/>
