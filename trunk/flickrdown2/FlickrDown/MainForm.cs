@@ -23,12 +23,12 @@ namespace FlickrDown
         private const string sharedSecret = "45cd580567c81986";
         private const string reg_path = "Software\\Greggman\\FlickrDown\\Settings";
         private Flickr _fapi = null;
-        private User _curUser = null;
+        private FoundUser _curUser = null;
         private Person _curPerson = null;
         private Photosets _curPhotosets = null;
         private Photos _curPhotos = null;
 
-        private PoolGroups _curPoolGroups = null;
+        private GroupSearchResults _curPoolGroups = null;
         private Photos[] _curGroupPhotos = null;
 
         private string _curTags = "";
@@ -49,6 +49,39 @@ namespace FlickrDown
         private string _destFolder = "";
         private string _flickrToken = "";
 
+        // yea, I know I should make a class for this
+        /*
+        class HistoryString
+        {
+            private const int    maxHistory = 10;
+            private string       _value
+            private string       _controlName;
+            private List<string> _history = new List<string>;
+
+            public int Count
+            {
+                get { return _history.Count(); }
+            }
+            public int Value
+            {
+                get { return _value; }
+                set { _value = value; }
+            }
+            public string GetAt(int index)
+            {
+                return _history[ii];
+            }
+            public SetAt(int index, string value)
+            {
+                _history[ii] = value;
+            }
+        }
+        */
+        private const string _destCtrlName = "destfolder";
+        private List<string> _destHistory = new List<string>();
+        private const string _searchCtrlName = "searchinfo";
+        private List<string> _searchHistory = new List<string>();
+
         // yes I know I should have used some object oriented way to do this but
         // that required thought or in otherwords time and I needed to get this
         // done ASAP.  Refactor if it's actually a real issue in the future
@@ -64,6 +97,13 @@ namespace FlickrDown
         public MainForm()
         {
             InitializeComponent();
+
+            // setup historys
+            for (int ii = 0; ii < 10; ++ii)
+            {
+                _destHistory.Add("");
+                _searchHistory.Add("");
+            }
 
             // Attempt to open the key
             RegistryKey key = Registry.CurrentUser.OpenSubKey( reg_path );
@@ -81,7 +121,7 @@ namespace FlickrDown
             this.webBrowser1.ObjectForScripting = this;
 
             _fapi = new Flickr(appkey, sharedSecret);
-            _fapi.ApiToken = _flickrToken;
+            _fapi.AuthToken = _flickrToken;
             ValidateToken();
 
             // setup background worker
@@ -99,8 +139,34 @@ namespace FlickrDown
             this.webBrowser1.Navigate(formurl);
         }
 
+        private void UpdateHistory(ref List<string> history, string controlName)
+        {
+            ClearOptions(controlName);
+            int count = 0;
+            for (int ii = 0; ii < history.Count; ++ii)
+            {
+                if (history[ii].Length > 0)
+                {
+                    count++;
+                    AddOption(controlName, history[ii], history[ii]);
+                }
+            }
+        }
+
+        private void AddToHistory(ref List<string> history, string controlName, string newValue)
+        {
+            if (!history.Contains(newValue))
+            {
+                history.RemoveAt(0);
+                history.Add(newValue);
+                UpdateHistory(ref history, controlName);
+            }
+        }
+
         private void webBrowser1_DocumentCompleted(object sender, WebBrowserDocumentCompletedEventArgs e)
         {
+            UpdateHistory(ref _destHistory, _destCtrlName);
+            UpdateHistory(ref _searchHistory, _searchCtrlName);
             SetValue("searchinfo", _searchInfo);
             SetRadioValue("searchtype", _searchType);
             SetValue("destfolder", _destFolder);
@@ -137,7 +203,7 @@ namespace FlickrDown
                 catch (Exception ex)
                 {
                     _flickrToken = "";
-                    _fapi.ApiToken = "";
+                    _fapi.AuthToken = "";
                 }
             }
         }
@@ -169,6 +235,23 @@ namespace FlickrDown
                 {
                     value = key.GetValue(label).ToString();
                 }
+                else
+                {
+                    value = "";
+                }
+            }
+        }
+
+        private void UpdateListKey(RegistryKey key, ref List<string> history, string controlName, bool bSave)
+        {
+            for (int ii = 0; ii < history.Count; ++ii)
+            {
+                string str = history[ii];
+                UpdateKey(key, controlName + "_" + ii.ToString(), ref str, bSave);
+                if (!bSave)
+                {
+                    history[ii] = str;
+                }
             }
         }
 
@@ -183,6 +266,9 @@ namespace FlickrDown
             UpdateKey (key, "searchType",     ref _searchType    , bSave);
             UpdateKey (key, "destFolder",     ref _destFolder    , bSave);
             UpdateKey (key, "token",          ref _flickrToken   , bSave);
+
+            UpdateListKey(key, ref _destHistory, _destCtrlName, bSave);
+            UpdateListKey(key, ref _searchHistory, _searchCtrlName, bSave);
         }
 
         private void UpdateProxy()
@@ -271,12 +357,12 @@ namespace FlickrDown
                 _curPoolGroups = _fapi.GroupsSearch(text);
                 _curGroupPhotos = null;
 
-                if (_curPoolGroups.GroupsCollection != null)
+                if (_curPoolGroups.Groups != null)
                 {
-                    _curGroupPhotos = new Photos[_curPoolGroups.GroupsCollection.Length];
-                    foreach (PoolInfo pi in _curPoolGroups.GroupsCollection)
+                    _curGroupPhotos = new Photos[_curPoolGroups.Groups.Count];
+                    foreach (GroupSearchResult gsr in _curPoolGroups.Groups)
                     {
-                        AddItem(false, pi.GroupName, "", false);
+                        AddItem(false, gsr.GroupName, "", false);
                     }
                 }
             }
@@ -320,6 +406,20 @@ namespace FlickrDown
             Object[] args = new Object[] { name, text };
 
             this.webBrowser1.Document.InvokeScript("setvalue", args);
+        }
+
+        public void ClearOptions(string name)
+        {
+            Object[] args = new Object[] { name };
+
+            this.webBrowser1.Document.InvokeScript("clearoptions", args);
+        }
+
+        public void AddOption(string name, string text, string value)
+        {
+            Object[] args = new Object[] { name, text, value, false };
+
+            this.webBrowser1.Document.InvokeScript("addoption", args);
         }
 
         public void SetRadioValue(string name, string valueToBeChecked)
@@ -403,15 +503,19 @@ namespace FlickrDown
                 int index = 0;
                 foreach (DLPhoto dlp in _curDLPhotos)
                 {
+                    // get the real info
+                    PhotoInfo pi = _fapi.PhotosGetInfo(dlp.photo.PhotoId, dlp.photo.Secret);
+
                     string dstFolder = Path.Combine(_destFolder, Util.MakeFilenameSafe(dlp.photoSetName));
-//                  string src  = "http://photos" + dlp.photo.Server + ".flickr.com/" + dlp.photo.PhotoId + "_" + dlp.photo.Secret + "_o.jpg";
-//                  string src  = dlp.photo.OriginalUrl;
+////                  string src  = "http://photos" + dlp.photo.Server + ".flickr.com/" + dlp.photo.PhotoId + "_" + dlp.photo.Secret + "_o.jpg";
+////                  string src  = dlp.photo.OriginalUrl;
+//                    string src = "http://static.flickr.com/" + dlp.photo.Server + "/" + dlp.photo.PhotoId + "_" + dlp.photo.Secret + "_o." + origExt;
                     string origExt = "jpg";
-                    if (dlp.photo.OriginalFormat != null)
+                    if (pi.OriginalFormat != null && pi.OriginalFormat.Length > 0)
                     {
                         origExt = dlp.photo.OriginalFormat;
                     }
-                    string src = "http://static.flickr.com/" + dlp.photo.Server + "/" + dlp.photo.PhotoId + "_" + dlp.photo.Secret + "_o." + origExt;
+                    string src = pi.OriginalUrl;
                     string dst = Path.Combine(dstFolder, Util.MakeFilenameSafe(dlp.photo.Title));
                     string ext = "." + origExt;
                     if (Path.GetExtension(dst).ToLower().CompareTo(ext) != 0)
@@ -540,6 +644,8 @@ namespace FlickrDown
                     _browseType = BrowseType.groups;
                     GetGroups(searchinfo);
                 }
+
+                AddToHistory(ref _searchHistory, _searchCtrlName, searchinfo);
             }
             catch (Exception ex)
             {
@@ -602,7 +708,7 @@ namespace FlickrDown
                         {
                             if (ps != null)
                             {
-                                pc = _fapi.PhotosetsGetPhotos(ps.PhotosetId).PhotoCollection;
+                                pc = _fapi.PhotosetsGetPhotos(ps.PhotosetId);
                             }
                             else
                             {
@@ -666,16 +772,16 @@ namespace FlickrDown
                     int numSets = 0;
                     if (_curPoolGroups != null)
                     {
-                        numSets = _curPoolGroups.GroupsCollection.Length;
+                        numSets = _curPoolGroups.Groups.Count;
                     }
                     for (int ii = 0; ii < numSets; ++ii)
                     {
                         Photo[] pc = null;
-                        PoolInfo pi = null;
+                        GroupSearchResult gsr = null;
                         string title = null;
 
-                        pi = _curPoolGroups.GroupsCollection[ii];
-                        title = pi.GroupName;
+                        gsr = _curPoolGroups.Groups[ii];
+                        title = gsr.GroupName;
 
                         if (_curGroupPhotos[ii] != null)
                         {
@@ -690,7 +796,7 @@ namespace FlickrDown
 
                         if (pc == null && bChecked)
                         {
-                            _curGroupPhotos[ii] = _fapi.GroupPoolGetPhotos(pi.GroupId, 500, 1);
+                            _curGroupPhotos[ii] = _fapi.GroupPoolGetPhotos(gsr.GroupId, 500, 1);
                             pc = _curGroupPhotos[ii].PhotoCollection;
                         }
 
@@ -715,6 +821,8 @@ namespace FlickrDown
                         }
                     }
                 }
+
+                AddToHistory(ref _destHistory, _destCtrlName, destFolder);
             }
             catch (Exception ex)
             {
@@ -759,8 +867,7 @@ namespace FlickrDown
 
                         if (ps.PhotoCollection == null)
                         {
-                            Photoset photosPS = _fapi.PhotosetsGetPhotos(ps.PhotosetId);
-                            ps.PhotoCollection = photosPS.PhotoCollection;
+                            ps.PhotoCollection = _fapi.PhotosetsGetPhotos(ps.PhotosetId);
                         }
 
                         pc = ps.PhotoCollection;
@@ -774,9 +881,9 @@ namespace FlickrDown
                 {
                     if (_curGroupPhotos[ndx] == null)
                     {
-                        PoolInfo pi = _curPoolGroups.GroupsCollection[ndx];
+                        GroupSearchResult gsr = _curPoolGroups.Groups[ndx];
 
-                        _curGroupPhotos[ndx] = _fapi.GroupPoolGetPhotos(pi.GroupId, 500, 1);
+                        _curGroupPhotos[ndx] = _fapi.GroupPoolGetPhotos(gsr.GroupId, 500, 1);
                         pc = _curGroupPhotos[ndx].PhotoCollection;
                     }
                 }
@@ -870,7 +977,7 @@ namespace FlickrDown
                     _flickrToken = "";
                 }
             }
-            _fapi.ApiToken = _flickrToken;
+            _fapi.AuthToken = _flickrToken;
             UpdateAuthenticateButton();
         }
     }
