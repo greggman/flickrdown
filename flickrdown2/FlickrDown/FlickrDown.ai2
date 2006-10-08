@@ -169,6 +169,7 @@
     <installation-icon file="" />
     <min-compression-ratio value="0" />
     <autorun-mode selected="0" />
+    <x64-compliance-mode selected="0" />
     <version-information file-version-major-low="0" file-version-minor-low="0" file-version-major-high="1" create-version-information="0" file-version-minor-high="0">
       <string-properties>
         <property property-key="Comments" property-value="" />
