@@ -22,6 +22,7 @@ namespace FlickrDown
         private const string appkey = "142daee489f7fa7ee1cde6647d9c66d1";
         private const string sharedSecret = "45cd580567c81986";
         private const string reg_path = "Software\\Greggman\\FlickrDown\\Settings";
+        private const int PhotosPerPage = 500;
         private Flickr _fapi = null;
         private FoundUser _curUser = null;
         private Person _curPerson = null;
@@ -43,6 +44,8 @@ namespace FlickrDown
         private bool _useProxyAuth = false;
         private string _proxyUsername = "";
         private string _proxyPassword = "";
+
+        private int _downloadLimit = 500;
 
         private string _searchInfo = "";
         private string _searchType = "username";
@@ -235,12 +238,24 @@ namespace FlickrDown
                 {
                     value = key.GetValue(label).ToString();
                 }
-                else
+            }
+        }
+
+        private void UpdateKey (RegistryKey key, string label, ref int value, bool bSave)
+        {
+            if (bSave)
+            {
+                key.SetValue(label, value.ToString());
+            }
+            else
+            {
+                if (key.GetValue(label) != null)
                 {
-                    value = "";
+                    value = int.Parse(key.GetValue(label).ToString());
                 }
             }
         }
+
 
         private void UpdateListKey(RegistryKey key, ref List<string> history, string controlName, bool bSave)
         {
@@ -266,6 +281,7 @@ namespace FlickrDown
             UpdateKey (key, "searchType",     ref _searchType    , bSave);
             UpdateKey (key, "destFolder",     ref _destFolder    , bSave);
             UpdateKey (key, "token",          ref _flickrToken   , bSave);
+            UpdateKey (key, "downloadLimit",  ref _downloadLimit , bSave);
 
             UpdateListKey(key, ref _destHistory, _destCtrlName, bSave);
             UpdateListKey(key, ref _searchHistory, _searchCtrlName, bSave);
@@ -373,12 +389,37 @@ namespace FlickrDown
 
         }
 
+        public Photos GetTagPhotos(string tags)
+        {
+            Photos allPhotos = new Photos();
+            Photos ps = _fapi.PhotosSearch(tags, TagMode.AllTags, "", 1, 1);
+
+            int numToGet = Math.Min((int)ps.TotalPhotos, _downloadLimit);
+            int pages    = (numToGet + PhotosPerPage - 1) / PhotosPerPage;
+
+            // put them in a list because the number may have changed between the time we got this info and now
+            for (int page = 1; page <= pages; page++)
+            {
+                ps = _fapi.PhotosSearch(tags, TagMode.AllTags, "", PhotosPerPage, page);
+                foreach (Photo ph in ps.PhotoCollection)
+                {
+                    allPhotos.PhotoCollection.Add(ph);
+                    if (allPhotos.PhotoCollection.Count >= numToGet)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            return allPhotos;
+        }
+
         private void GetPhotosByTag(string tags)
         {
             try
             {
                 _curTags = tags;
-                _curTagPhotos = _fapi.PhotosSearch(tags, TagMode.AllTags, "", 500, 1);
+                _curTagPhotos = GetTagPhotos(tags);
                 if (_curTagPhotos.PhotoCollection.Length == 0)
                 {
                     MessageBox.Show(this, "There are no photos that match these tags");
@@ -455,14 +496,16 @@ namespace FlickrDown
             frm.UseProxyAuth = _useProxyAuth;
             frm.ProxyUsername = _proxyUsername;
             frm.ProxyPassword = _proxyPassword;
+            frm.DownloadLimit = _downloadLimit;
 
             if (frm.ShowDialog() == DialogResult.OK)
             {
-                 _useProxy =      frm.UseProxy  ;
-                 _proxyAddress =  frm.ProxyAddress ;
-                 _useProxyAuth =  frm.UseProxyAuth      ;
-                 _proxyUsername = frm.ProxyUsername     ;
-                 _proxyPassword = frm.ProxyPassword     ;
+                 _useProxy =      frm.UseProxy;
+                 _proxyAddress =  frm.ProxyAddress;
+                 _useProxyAuth =  frm.UseProxyAuth;
+                 _proxyUsername = frm.ProxyUsername;
+                 _proxyPassword = frm.ProxyPassword;
+                 _downloadLimit = frm.DownloadLimit;
 
                  UpdateProxy();
             }
@@ -664,6 +707,90 @@ namespace FlickrDown
             return "";
         }
 
+        public Photo[] GetPhotosetPhotos(Photoset ps)
+        {
+            int numToGet = Math.Min(ps.NumberOfPhotos, _downloadLimit);
+            int pages    = (numToGet + PhotosPerPage - 1) / PhotosPerPage;
+
+            List<Photo> allPhotos = new List<Photo>();
+
+            // put them in a list because the number may have changed between the time we got this info and now
+            for (int page = 1; page <= pages; page++)
+            {
+                Photo[] photos = _fapi.PhotosetsGetPhotos(ps.PhotosetId, page);
+
+                foreach (Photo ph in photos)
+                {
+                    allPhotos.Add(ph);
+                    if (allPhotos.Count >= numToGet)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            // convert the list to an array
+            Photo[] pc = new Photo[allPhotos.Count];
+            int index = 0;
+            foreach(Photo ph in allPhotos)
+            {
+                pc[index] = ph;
+                index++;
+            }
+
+            return pc;
+        }
+
+        public Photos GetUsersPhotos(FoundUser user)
+        {
+            Photos allPhotos = new Photos();
+            Photos ps = _fapi.PhotosSearch(user.UserId, "", TagMode.AllTags, "", DateTime.MinValue, DateTime.MinValue, 0, 1, 1, PhotoSearchExtras.All);
+
+            int numToGet = Math.Min((int)ps.TotalPhotos, _downloadLimit);
+            int pages    = (numToGet + PhotosPerPage - 1) / PhotosPerPage;
+
+            // put them in a list because the number may have changed between the time we got this info and now
+            for (int page = 1; page <= pages; page++)
+            {
+                ps = _fapi.PhotosSearch(user.UserId, "", TagMode.AllTags, "", DateTime.MinValue, DateTime.MinValue, 0, PhotosPerPage, page, PhotoSearchExtras.All);
+                foreach (Photo ph in ps.PhotoCollection)
+                {
+                    allPhotos.PhotoCollection.Add(ph);
+                    if (allPhotos.PhotoCollection.Count >= numToGet)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            return allPhotos;
+        }
+
+        public Photos GetGroupPhotos(GroupSearchResult gsr)
+        {
+            Photos allPhotos = new Photos();
+            Photos ps = _fapi.GroupPoolGetPhotos(gsr.GroupId, 1, 1);
+
+            int numToGet = Math.Min((int)ps.TotalPhotos, _downloadLimit);
+            int pages    = (numToGet + PhotosPerPage - 1) / PhotosPerPage;
+
+            // put them in a list because the number may have changed between the time we got this info and now
+            for (int page = 1; page <= pages; page++)
+            {
+                ps = _fapi.GroupPoolGetPhotos(gsr.GroupId, PhotosPerPage, page);
+                foreach (Photo ph in ps.PhotoCollection)
+                {
+                    allPhotos.PhotoCollection.Add(ph);
+                    if (allPhotos.PhotoCollection.Count >= numToGet)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            return allPhotos;
+        }
+
         public void DownloadSets(string destFolder)
         {
             _destFolder  = destFolder;
@@ -708,12 +835,11 @@ namespace FlickrDown
                         {
                             if (ps != null)
                             {
-                                pc = _fapi.PhotosetsGetPhotos(ps.PhotosetId);
+                                pc = GetPhotosetPhotos(ps);
                             }
                             else
                             {
-                                //_curPhotos = _fapi.PeopleGetPublicPhotos(_curUser.UserId, 100, 1);
-                                _curPhotos = _fapi.PhotosSearch(_curUser.UserId, "", TagMode.AllTags, "", DateTime.MinValue, DateTime.MinValue, 0, 500, 1, PhotoSearchExtras.All);
+                                _curPhotos = GetUsersPhotos(_curUser);
                                 pc = _curPhotos.PhotoCollection;
                             }
                         }
@@ -796,7 +922,7 @@ namespace FlickrDown
 
                         if (pc == null && bChecked)
                         {
-                            _curGroupPhotos[ii] = _fapi.GroupPoolGetPhotos(gsr.GroupId, 500, 1);
+                            _curGroupPhotos[ii] = GetGroupPhotos(gsr);
                             pc = _curGroupPhotos[ii].PhotoCollection;
                         }
 
@@ -856,8 +982,7 @@ namespace FlickrDown
                     {
                         if (_curPhotos == null)
                         {
-                            //_curPhotos = _fapi.PeopleGetPublicPhotos(_curUser.UserId, 500, 1);
-                            _curPhotos = _fapi.PhotosSearch(_curUser.UserId, "", TagMode.AllTags, "", DateTime.MinValue, DateTime.MinValue, 0, 500, 1, PhotoSearchExtras.All);
+                            _curPhotos = GetUsersPhotos(_curUser);
                         }
                         pc = _curPhotos.PhotoCollection;
                     }
@@ -867,7 +992,7 @@ namespace FlickrDown
 
                         if (ps.PhotoCollection == null)
                         {
-                            ps.PhotoCollection = _fapi.PhotosetsGetPhotos(ps.PhotosetId);
+                            ps.PhotoCollection = GetPhotosetPhotos(ps);
                         }
 
                         pc = ps.PhotoCollection;
@@ -883,7 +1008,7 @@ namespace FlickrDown
                     {
                         GroupSearchResult gsr = _curPoolGroups.Groups[ndx];
 
-                        _curGroupPhotos[ndx] = _fapi.GroupPoolGetPhotos(gsr.GroupId, 500, 1);
+                        _curGroupPhotos[ndx] = GetGroupPhotos(gsr);
                         pc = _curGroupPhotos[ndx].PhotoCollection;
                     }
                 }
