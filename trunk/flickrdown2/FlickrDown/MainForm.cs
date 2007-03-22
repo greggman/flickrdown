@@ -538,6 +538,34 @@ namespace FlickrDown
 
         }
 
+        private bool GetSrcURLByLabel(ref string srcURL, Sizes sz, string label)
+        {
+            foreach (FlickrNet.Size s in sz.SizeCollection)
+            {
+                if (s.Label == label)
+                {
+                    srcURL = s.Source;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private string GetSrcURL(string photoId)
+        {
+            string srcURL = "";
+            Sizes sz = _fapi.PhotosGetSizes(photoId);
+
+            if (GetSrcURLByLabel(ref srcURL, sz, "Original")) { return srcURL; }
+            if (GetSrcURLByLabel(ref srcURL, sz, "Large")) { return srcURL; }
+            if (GetSrcURLByLabel(ref srcURL, sz, "Medium")) { return srcURL; }
+            if (GetSrcURLByLabel(ref srcURL, sz, "Small")) { return srcURL; }
+
+            return "no url found"; // TODO: throw exception
+        }
+
+
         public void DownloadPhotos (BackgroundWorker bgw)
         {
             Regex r = new Regex("-fd(?<1>\\d\\d\\d\\d)$", RegexOptions.Compiled);
@@ -558,7 +586,8 @@ namespace FlickrDown
                     {
                         origExt = dlp.photo.OriginalFormat;
                     }
-                    string src = pi.OriginalUrl;
+                    // string src = pi.OriginalUrl;
+                    string src = GetSrcURL(dlp.photo.PhotoId);
                     string dst = Path.Combine(dstFolder, Util.MakeFilenameSafe(dlp.photo.Title));
                     string ext = "." + origExt;
                     if (Path.GetExtension(dst).ToLower().CompareTo(ext) != 0)

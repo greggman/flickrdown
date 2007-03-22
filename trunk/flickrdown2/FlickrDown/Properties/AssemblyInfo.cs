@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Greggman")]
 [assembly: AssemblyProduct("FlickrDown")]
-[assembly: AssemblyCopyright("Copyright © Greggman 2005-2006")]
+[assembly: AssemblyCopyright("Copyright © Greggman 2005-2007")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -29,5 +29,5 @@ using System.Runtime.InteropServices;
 //      Build Number
 //      Revision
 //
-[assembly: AssemblyVersion("2.4.0.0")]
-[assembly: AssemblyFileVersion("2.4.0.0")]
+[assembly: AssemblyVersion("2.4.1.0")]
+[assembly: AssemblyFileVersion("2.4.1.0")]
