@@ -389,6 +389,23 @@ namespace FlickrDown
 
         }
 
+        // Reallocates an array with a new size, and copies the contents
+        // of the old array to the new array.
+        // Arguments:
+        //   oldArray  the old array, to be reallocated.
+        //   newSize   the new array size.
+        // Returns     A new array with the same contents.
+        public static System.Array ResizeArray(System.Array oldArray, int newSize)
+        {
+            int oldSize = oldArray.Length;
+            System.Type elementType = oldArray.GetType().GetElementType();
+            System.Array newArray = System.Array.CreateInstance(elementType, newSize);
+            int preserveLength = System.Math.Min(oldSize, newSize);
+            if (preserveLength > 0)
+                System.Array.Copy(oldArray, newArray, preserveLength);
+            return newArray;
+        }
+
         public Photos GetTagPhotos(string tags)
         {
             Photos allPhotos = new Photos();
@@ -403,8 +420,12 @@ namespace FlickrDown
                 ps = _fapi.PhotosSearch(tags, TagMode.AllTags, "", PhotosPerPage, page);
                 foreach (Photo ph in ps.PhotoCollection)
                 {
-                    allPhotos.PhotoCollection.Add(ph);
-                    if (allPhotos.PhotoCollection.Count >= numToGet)
+                    //allPhotos.PhotoCollection.Add(ph);
+
+                    allPhotos.PhotoCollection = (PhotoCollection)ResizeArray(allPhotos.PhotoCollection, allPhotos.PhotoCollection.Length + 1);
+                    allPhotos.PhotoCollection[allPhotos.PhotoCollection.Length - 1] = ph;
+
+                    if (allPhotos.PhotoCollection.Length >= numToGet)
                     {
                         break;
                     }
@@ -624,6 +645,17 @@ namespace FlickrDown
                         }
                     }
 
+					//{
+                    //    StreamWriter sw = new StreamWriter(@"flickrdebuglog.txt", true);
+                    //
+					//	sw.Write("(");
+					//	sw.Write(src);
+					//	sw.Write(")->(");
+					//	sw.Write(dst);
+					//	sw.Write(")\n");
+					//	sw.Close();
+					//}
+
                     client.DownloadFile(src, dst);
 
                     bgw.ReportProgress(0, index);
@@ -746,7 +778,7 @@ namespace FlickrDown
             // put them in a list because the number may have changed between the time we got this info and now
             for (int page = 1; page <= pages; page++)
             {
-                Photo[] photos = _fapi.PhotosetsGetPhotos(ps.PhotosetId, page);
+                Photo[] photos = _fapi.PhotosetsGetPhotos(ps.PhotosetId, page, PhotosPerPage);
 
                 foreach (Photo ph in photos)
                 {
@@ -784,8 +816,11 @@ namespace FlickrDown
                 ps = _fapi.PhotosSearch(user.UserId, "", TagMode.AllTags, "", DateTime.MinValue, DateTime.MinValue, 0, PhotosPerPage, page, PhotoSearchExtras.All);
                 foreach (Photo ph in ps.PhotoCollection)
                 {
-                    allPhotos.PhotoCollection.Add(ph);
-                    if (allPhotos.PhotoCollection.Count >= numToGet)
+                    // allPhotos.PhotoCollection.Add(ph);
+                    allPhotos.PhotoCollection = (PhotoCollection)ResizeArray(allPhotos.PhotoCollection, allPhotos.PhotoCollection.Length + 1);
+                    allPhotos.PhotoCollection[allPhotos.PhotoCollection.Length - 1] = ph;
+
+                    if (allPhotos.PhotoCollection.Length >= numToGet)
                     {
                         break;
                     }
@@ -809,8 +844,11 @@ namespace FlickrDown
                 ps = _fapi.GroupPoolGetPhotos(gsr.GroupId, PhotosPerPage, page);
                 foreach (Photo ph in ps.PhotoCollection)
                 {
-                    allPhotos.PhotoCollection.Add(ph);
-                    if (allPhotos.PhotoCollection.Count >= numToGet)
+                    // allPhotos.PhotoCollection.Add(ph);
+                    allPhotos.PhotoCollection = (PhotoCollection)ResizeArray(allPhotos.PhotoCollection, allPhotos.PhotoCollection.Length + 1);
+                    allPhotos.PhotoCollection[allPhotos.PhotoCollection.Length - 1] = ph;
+
+                    if (allPhotos.PhotoCollection.Length >= numToGet)
                     {
                         break;
                     }
