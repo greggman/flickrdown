@@ -29,6 +29,7 @@ namespace FlickrNet
 	/// <summary>
 	/// Used to specify where all tags must be matched or any tag to be matched.
 	/// </summary>
+	[Serializable]
 	public enum TagMode
 	{
 		/// <summary>
@@ -51,8 +52,29 @@ namespace FlickrNet
 
 
 	/// <summary>
+	/// Used to specify where all tags must be matched or any tag to be matched.
+	/// </summary>
+	[Serializable]
+	public enum MachineTagMode
+	{
+		/// <summary>
+		/// No tag mode specified.
+		/// </summary>
+		None,
+		/// <summary>
+		/// Any tag must match, but not all.
+		/// </summary>
+		AnyTag,
+		/// <summary>
+		/// All tags must be found.
+		/// </summary>
+		AllTags
+	}
+
+	/// <summary>
 	/// When searching for photos you can filter on the privacy of the photos.
 	/// </summary>
+	[Serializable]
 	public enum PrivacyFilter
 	{
 		/// <summary>
@@ -84,6 +106,7 @@ namespace FlickrNet
 	/// <summary>
 	/// An enumeration defining who can add comments.
 	/// </summary>
+	[Serializable]
 	public enum PermissionComment
 	{
 		/// <summary>

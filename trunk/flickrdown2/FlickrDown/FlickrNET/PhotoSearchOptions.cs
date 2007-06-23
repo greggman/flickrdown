@@ -5,17 +5,20 @@ namespace FlickrNet
 	/// <summary>
 	/// Summary description for PhotoSearchOptions.
 	/// </summary>
+	[Serializable]
 	public class PhotoSearchOptions
 	{
 		private string _userId;
 		private string _tags;
 		private TagMode _tagMode = TagMode.None;
+		private string _machineTags;
+		private MachineTagMode _machineTagMode = MachineTagMode.None;
 		private string _text;
 		private DateTime _minUploadDate = DateTime.MinValue;
 		private DateTime _maxUploadDate = DateTime.MinValue;
 		private DateTime _minTakenDate = DateTime.MinValue;
 		private DateTime _maxTakenDate = DateTime.MinValue;
-		private int _license;
+		private System.Collections.ArrayList _licenses = new System.Collections.ArrayList();
 		private PhotoSearchExtras _extras = PhotoSearchExtras.None;
 		private int _perPage = 0;
 		private int _page = 0;
@@ -117,11 +120,52 @@ namespace FlickrNet
 					case TagMode.Boolean:
 						return "bool";
 					default:
-						return "all";
+						return "";
 				}
 			}
 		}
-	
+
+		/// <summary>
+		/// Search for the given machine tags.
+		/// </summary>
+		/// <remarks>
+		/// See http://www.flickr.com/services/api/flickr.photos.search.html for details 
+		/// on how to search for machine tags.
+		/// </remarks>
+		public string MachineTags
+		{
+			get { return _machineTags; } set { _machineTags = value; }
+		}
+
+		/// <summary>
+		/// The machine tag mode. 
+		/// </summary>
+		/// <remarks>
+		/// Allowed values are any and all. It defaults to any if none specified.
+		/// </remarks>
+		public MachineTagMode MachineTagMode
+		{
+			get { return _machineTagMode; } set { _machineTagMode = value; }
+		}
+
+		internal string MachineTagModeString
+		{
+			get
+			{
+				switch(_machineTagMode)
+				{
+					case MachineTagMode.None:
+						return "";
+					case MachineTagMode.AllTags:
+						return "all";
+					case MachineTagMode.AnyTag:
+						return "any";
+					default:
+						return "";
+				}
+			}
+		}
+
 		/// <summary>
 		/// Search for the given text in photo titles and descriptions.
 		/// </summary>
@@ -176,10 +220,52 @@ namespace FlickrNet
 		/// See http://www.flickr.com/services/api/flickr.photos.licenses.getInfo.html
 		/// for more details on the numbers to use.
 		/// </summary>
+		[Obsolete("Use AddLicense/RemoveLicense to add/remove licenses")]
 		public int License
 		{
-			get { return _license; }
-			set { _license = value; }
+			get 
+			{
+				if( _licenses.Count == 0 )
+					return 0;
+				else
+					return (int)_licenses[0];
+			}
+			set 
+			{
+				if( _licenses.Count == 0 )
+					_licenses.Add(value);
+				else
+					_licenses[0] = value;
+			}
+		}
+
+		/// <summary>
+		/// Returns a copy of the licenses to be searched for.
+		/// </summary>
+		public int[] Licenses
+		{
+			get 
+			{
+				return (int[])_licenses.ToArray(typeof(int));
+			}
+		}
+
+		/// <summary>
+		/// Adds a new license to the list of licenses to be searched for.
+		/// </summary>
+		/// <param name="license">The number of the license to search for.</param>
+		public void AddLicense(int license)
+		{
+			if( !_licenses.Contains(license) ) _licenses.Add(license);
+		}
+
+		/// <summary>
+		/// Removes a license from the list of licenses to be searched for.
+		/// </summary>
+		/// <param name="license">The number of the license to remove.</param>
+		public void RemoveLicense(int license)
+		{
+			if( _licenses.Contains(license) ) _licenses.Remove(license);
 		}
 
 		/// <summary>
@@ -208,7 +294,7 @@ namespace FlickrNet
 			get { return _page; }
 			set 
 			{
-				if( value < 0 ) throw new ArgumentOutOfRangeException("Page", value, "Must be greater than 0");
+				if( value < 0 ) throw new ArgumentOutOfRangeException("Page", "Must be greater than 0");
 				_page = value; 
 			}
 		}

@@ -30,10 +30,10 @@
     </StartupObject>
     <FileUpgradeFlags>
     </FileUpgradeFlags>
-    <SccAuxPath>
-    </SccAuxPath>
     <UpgradeBackupLocation>
     </UpgradeBackupLocation>
+    <SccAuxPath>
+    </SccAuxPath>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <OutputPath>bin\Debug\</OutputPath>
@@ -98,6 +98,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ActivityEvent.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="ActivityItem.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -210,6 +216,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Response.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="SafeNativeMethods.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Sizes.cs">

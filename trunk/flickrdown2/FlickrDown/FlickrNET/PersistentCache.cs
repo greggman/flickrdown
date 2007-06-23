@@ -2,7 +2,7 @@ using System;
 using System.Collections;
 using System.Diagnostics;
 using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
+//using System.Runtime.Serialization.Formatters.Binary;
 
 namespace FlickrNet
 {
@@ -254,7 +254,7 @@ namespace FlickrNet
 			if (dataFile.Exists)
 			{
 				dataFile.Refresh();
-				newTimestamp = dataFile.LastWriteTimeUtc;
+				newTimestamp = dataFile.LastWriteTime;
 				newLength = dataFile.Length;
 			}
 
@@ -290,7 +290,7 @@ namespace FlickrNet
 			}
 
 			dataFile.Refresh();
-			timestamp = dataFile.LastWriteTimeUtc;
+			timestamp = dataFile.LastWriteTime;
 			length = dataFile.Length;
 
 			dirty = false;
@@ -306,6 +306,9 @@ namespace FlickrNet
 				{
 					string key = Utils.ReadString(s);
 					ICacheItem val = persister.Read(s);
+					if( val == null ) // corrupt cache file 
+						return table;
+
 					table[key] = val;
 				}
 				catch(IOException)

@@ -11,7 +11,15 @@ namespace FlickrNet
 	/// </summary>
 	internal sealed class Cache
 	{
+		private class CacheException : Exception
+		{
+			public CacheException(string message) : base(message)
+			{}
+
+		}
+
 		private static PersistentCache _downloads;
+
 
 		/// <summary>
 		/// A static object containing the list of cached downloaded files.
@@ -64,8 +72,10 @@ namespace FlickrNet
 		{
 			get
 			{
+#if !WindowsCE
 				if( _cacheDisabled == Tristate.Null && FlickrConfigurationManager.Settings != null )
 					_cacheDisabled = (FlickrConfigurationManager.Settings.CacheDisabled?Tristate.True:Tristate.False);
+#endif
 				
 				if( _cacheDisabled == Tristate.Null ) _cacheDisabled = Tristate.False;
 
@@ -83,19 +93,30 @@ namespace FlickrNet
 		{
 			get 
 			{ 
+#if !WindowsCE
 				if( _cacheLocation == null && FlickrConfigurationManager.Settings != null )
 					_cacheLocation = FlickrConfigurationManager.Settings.CacheLocation;
+#endif
 				if( _cacheLocation == null )
 				{
 					try
 					{
+#if !WindowsCE
 						_cacheLocation = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FlickrNet");
+#else
+                        _cacheLocation = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "FlickrNetCache");
+#endif
 					}
 					catch(System.Security.SecurityException)
 					{
 						// Permission to read application directory not provided.
+						throw new CacheException("Unable to read default cache location. Please cacheLocation in configuration file or set manually in code");
 					}
 				}
+
+				if( _cacheLocation == null )
+					throw new CacheException("Unable to determine cache location. Please set cacheLocation in configuration file or set manually in code");
+
 				return _cacheLocation;
 			}
 			set
@@ -104,21 +125,19 @@ namespace FlickrNet
 			}
 		}
 
+		// Default cache size is set to 50MB
+        private static long _cacheSizeLimit = 52428800;
+        private static long _cacheSize;
+
 		internal static long CacheSizeLimit
 		{
 			get 
 			{
-				if( CacheSettings.ContainsKey("SizeLimit") )
-					return (long)CacheSettings["SizeLimit"];
-				else
-					return 50 * 1024 * 1024;
+                return _cacheSizeLimit;
 			}
 			set 
-			{ 
-				if( CacheSettings.ContainsKey("SizeLimit") )
-					CacheSettings["SizeLimit"] = value;
-				else
-					CacheSettings.Add("SizeLimit", value);
+			{
+                _cacheSizeLimit = value;
 			}
 		}
 
@@ -126,17 +145,11 @@ namespace FlickrNet
 		{
 			get 
 			{
-				if( CacheSettings.ContainsKey("CurrentSize") )
-					return (long)CacheSettings["CurrentSize"];
-				else
-					return 0;
+                return _cacheSize;
 			}
 			set 
-			{ 
-				if( CacheSettings.ContainsKey("CurrentSize") )
-					CacheSettings["CurrentSize"] = value;
-				else
-					CacheSettings.Add("CurrentSize", value);
+			{
+                _cacheSize = value;
 			}
 		}
 
@@ -153,79 +166,6 @@ namespace FlickrNet
 			set { _cachetimeout = value; }
 		}
 		
-		private static Hashtable _cacheSettings;
-
-		private static Hashtable CacheSettings
-		{
-			get
-			{
-				lock(lockObject)
-				{
-					if( _cacheSettings == null )
-						LoadSettings();
-					return _cacheSettings;
-				}
-			}
-		}
-
-		private static void SaveSettings()
-		{
-			System.Runtime.Serialization.Formatters.Binary.BinaryFormatter formatter = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
-
-			System.IO.Stream stream;
-
-			lock(CacheSettings.SyncRoot)
-			{
-				if( CacheLocation == null ) return;
-
-				stream = new FileStream(Path.Combine(CacheLocation, "cacheSettings.bin"), FileMode.OpenOrCreate, FileAccess.Write);
-				try
-				{
-					formatter.Serialize(stream, CacheSettings);
-				}
-				finally
-				{
-					stream.Close();
-				}
-			}
-		}
-
-		private static void LoadSettings()
-		{
-			if( !Directory.Exists(CacheLocation) ) Directory.CreateDirectory(CacheLocation);
-
-			System.Runtime.Serialization.Formatters.Binary.BinaryFormatter formatter = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
-
-			System.IO.Stream stream = null;
-
-			if( CacheLocation != null ) 
-			{
-				stream = new FileStream(Path.Combine(CacheLocation, "cacheSettings.bin"), FileMode.OpenOrCreate);
-			}
-
-			if( stream == null )
-			{
-				_cacheSettings = new Hashtable();
-				return;
-			}
-			try
-			{
-				_cacheSettings = (Hashtable)formatter.Deserialize(stream);
-			}
-			catch(InvalidCastException)
-			{
-				_cacheSettings = new Hashtable();
-			}
-			catch(System.Runtime.Serialization.SerializationException)
-			{
-				_cacheSettings = new Hashtable();
-			}
-			finally
-			{
-				stream.Close();
-			}
-		}
-
 		internal static void FlushCache(string url)
 		{
 			Responses[url] = null;
@@ -284,6 +224,11 @@ namespace FlickrNet
 			string response = Utils.ReadString(inputStream);
 
 			string[] chunks = s.Split('\n');
+
+			// Corrupted cache record, so throw IOException which is then handled and returns partial cache.
+			if( chunks.Length != 2 )
+				throw new IOException("Unexpected number of chunks found");
+
 			string url = chunks[0];
 			DateTime creationTime = new DateTime(long.Parse(chunks[1]));
 			ResponseCacheItem item = new ResponseCacheItem();
@@ -298,7 +243,7 @@ namespace FlickrNet
 			ResponseCacheItem item = (ResponseCacheItem) cacheItem;
 			StringBuilder result = new StringBuilder();
 			result.Append(item.Url + "\n");
-			result.Append(item.CreationTime.Ticks + "\n");
+			result.Append(item.CreationTime.Ticks.ToString("0"));
 			Utils.WriteString(outputStream, result.ToString());
 			Utils.WriteString(outputStream, item.Response);
 		}
@@ -439,7 +384,4 @@ namespace FlickrNet
 			Utils.WriteString(outputStream, output.ToString());
 		}
 	}
-
-
-
 }

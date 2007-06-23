@@ -7,6 +7,7 @@ namespace FlickrNet
 	/// <summary>
 	/// Summary description for BoundaryBox.
 	/// </summary>
+	[Serializable]
 	public class BoundaryBox
 	{
 		private GeoAccuracy _accuracy = GeoAccuracy.Street;
@@ -43,7 +44,7 @@ namespace FlickrNet
 			set 
 			{
 				if( value < -90 || value > 90 ) 
-					throw new ArgumentOutOfRangeException("MinimumLatitude", value, "Must be between -90 and 90");
+					throw new ArgumentOutOfRangeException("MinimumLatitude", "Must be between -90 and 90");
 				_isSet = true; _minimumLat = value; 
 			}
 		}
@@ -56,7 +57,7 @@ namespace FlickrNet
 			get { return _minimumLon; }
 			set { 
 				if( value < -180 || value > 180 ) 
-					throw new ArgumentOutOfRangeException("MinimumLongitude", value, "Must be between -180 and 180");
+					throw new ArgumentOutOfRangeException("MinimumLongitude", "Must be between -180 and 180");
 				_isSet = true; _minimumLon = value; 
 			}
 		}
@@ -70,7 +71,7 @@ namespace FlickrNet
 			set 
 			{
 				if( value < -90 || value > 90 ) 
-					throw new ArgumentOutOfRangeException("MaximumLatitude", value, "Must be between -90 and 90");
+					throw new ArgumentOutOfRangeException("MaximumLatitude", "Must be between -90 and 90");
 				_isSet = true; _maximumLat = value; 
 			}
 		}
@@ -84,7 +85,7 @@ namespace FlickrNet
 			set 
 			{
 				if( value < -180 || value > 180 ) 
-					throw new ArgumentOutOfRangeException("MaximumLongitude", value, "Must be between -180 and 180");
+					throw new ArgumentOutOfRangeException("MaximumLongitude", "Must be between -180 and 180");
 				_isSet = true; _maximumLon = value; 
 			}
 		}
