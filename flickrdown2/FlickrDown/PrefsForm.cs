@@ -36,7 +36,7 @@ namespace FlickrDown
                     success = true;
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 Console.Beep();
             }

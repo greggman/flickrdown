@@ -514,7 +514,7 @@ namespace FlickrNet
 				if( UrlStringBuilder.Length > BaseUrl.Length + 1 ) UrlStringBuilder.Append("&");
                 UrlStringBuilder.Append(key);
                 UrlStringBuilder.Append("=");
-                UrlStringBuilder.Append(Utils.UrlEncode((string)parameters[key]));
+                UrlStringBuilder.Append(Utils.UrlEncode(parameters[key].ToString()));
                 HashStringBuilder.Append(key);
                 HashStringBuilder.Append(parameters[key]);
 			}

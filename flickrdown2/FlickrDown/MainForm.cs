@@ -203,7 +203,7 @@ namespace FlickrDown
                 {
                     _fapi.AuthCheckToken(_flickrToken);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     _flickrToken = "";
                     _fapi.AuthToken = "";
@@ -595,10 +595,25 @@ namespace FlickrDown
                 int index = 0;
                 foreach (DLPhoto dlp in _curDLPhotos)
                 {
+					if (bgw.CancellationPending)
+					{
+						return;
+					}
+
                     // get the real info
                     PhotoInfo pi = _fapi.PhotosGetInfo(dlp.photo.PhotoId, dlp.photo.Secret);
 
                     string dstFolder = Path.Combine(_destFolder, Util.MakeFilenameSafe(dlp.photoSetName));
+
+					try
+					{
+						ConfirmOrMakeFolder(dstFolder);
+					}
+					catch (Exception)
+					{
+						dstFolder = Path.Combine(_destFolder, Util.MakeFilenameSuperSafe(dlp.photoSetName));
+					}
+
 ////                  string src  = "http://photos" + dlp.photo.Server + ".flickr.com/" + dlp.photo.PhotoId + "_" + dlp.photo.Secret + "_o.jpg";
 ////                  string src  = dlp.photo.OriginalUrl;
 //                    string src = "http://static.flickr.com/" + dlp.photo.Server + "/" + dlp.photo.PhotoId + "_" + dlp.photo.Secret + "_o." + origExt;
@@ -616,12 +631,27 @@ namespace FlickrDown
                         dst = dst + ext;
                     }
 
-                    if (bgw.CancellationPending)
-                    {
-                        return;
-                    }
-
-                    ConfirmOrMakeFolder(dstFolder);
+					if (!File.Exists(dst))
+					{
+						// it doesn't exist therefore we don't know if this is a valid filename
+						try
+						{
+							// create creating the file then delete it
+							// if we are succesful there's not problem
+							StreamWriter sw = new StreamWriter(dst);
+							sw.Close();
+							File.Delete(dst);
+						}
+						catch (Exception)
+						{
+							// create a super safe name
+							dst = Path.Combine(dstFolder, Util.MakeFilenameSuperSafe(dlp.photo.Title));
+							if (Path.GetExtension(dst).ToLower().CompareTo(ext) != 0)
+							{
+								dst = dst + ext;
+							}
+						}
+					}
 
                     while (File.Exists(dst))
                     {
@@ -1196,11 +1226,30 @@ namespace FlickrDown
         {
             //Regex r1 = new Regex("%\\d\\d", RegexOptions.IgnoreCase | RegexOptions.Compiled);
             //str = r1.Replace(str, "_");
-            Regex r2 = Util.MakeRegex("[^\\w\\.]", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+            //Regex r2 = Util.MakeRegex("[^\\w\\. '+=\\[\\]@,]", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+			Regex r3 = Util.MakeRegex("[/\\\\]", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+			str = r3.Replace(str, "-");
+			Regex r4 = Util.MakeRegex("[\\:]", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+			str = r4.Replace(str, ";");
+			Regex r2 = Util.MakeRegex("[/\\\\:\\*\\?\"\\<\\>\\|]", RegexOptions.IgnoreCase | RegexOptions.Compiled);
             str = r2.Replace(str, "_");
 
             return str;
         }
+
+		static public string MakeFilenameSuperSafe(string str)
+		{
+			//Regex r1 = new Regex("%\\d\\d", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+			//str = r1.Replace(str, "_");
+			Regex r3 = Util.MakeRegex("[/\\\\]", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+			str = r3.Replace(str, "-");
+			Regex r4 = Util.MakeRegex("[\\:]", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+			str = r4.Replace(str, ";");
+			Regex r2 = Util.MakeRegex("[^\\w\\. '+=\\[\\]@,]", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+			str = r2.Replace(str, "_");
+
+			return str;
+		}
 
         static public bool FindLocalFile (ref string filename)
         {
