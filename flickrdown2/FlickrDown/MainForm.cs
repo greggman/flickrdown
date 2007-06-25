@@ -406,6 +406,27 @@ namespace FlickrDown
             return newArray;
         }
 
+        // this is really FUCKING STUPID.
+        // sometime between when I started this project and now Photos went from
+        // using a PhotoCollection to using a Photo[]. Well. A Photo[] is a static size.
+        // You can't reallocate it. Then on top of that. 
+        public Photo[] ResizePhotoCollection(Photo[] pc, int newSize)
+        {
+            Photo[] newpc = new Photo[newSize];
+
+            for (int ii = 0; ii < pc.Length; ++ii)
+            {
+                newpc[ii] = pc[ii];
+            }
+
+            for (int ii = pc.Length; ii < newSize; ++ii)
+            {
+                newpc[ii] = new Photo();
+            }
+
+            return newpc;
+        }
+
         public Photos GetTagPhotos(string tags)
         {
             Photos allPhotos = new Photos();
@@ -422,7 +443,7 @@ namespace FlickrDown
                 {
                     //allPhotos.PhotoCollection.Add(ph);
 
-                    allPhotos.PhotoCollection = (PhotoCollection)ResizeArray(allPhotos.PhotoCollection, allPhotos.PhotoCollection.Length + 1);
+                    allPhotos.PhotoCollection = ResizePhotoCollection(allPhotos.PhotoCollection, allPhotos.PhotoCollection.Length + 1);
                     allPhotos.PhotoCollection[allPhotos.PhotoCollection.Length - 1] = ph;
 
                     if (allPhotos.PhotoCollection.Length >= numToGet)
@@ -846,8 +867,8 @@ namespace FlickrDown
                 ps = _fapi.PhotosSearch(user.UserId, "", TagMode.AllTags, "", DateTime.MinValue, DateTime.MinValue, 0, PhotosPerPage, page, PhotoSearchExtras.All);
                 foreach (Photo ph in ps.PhotoCollection)
                 {
-                    // allPhotos.PhotoCollection.Add(ph);
-                    allPhotos.PhotoCollection = (PhotoCollection)ResizeArray(allPhotos.PhotoCollection, allPhotos.PhotoCollection.Length + 1);
+                    //allPhotos.PhotoCollection.Add(ph);
+                    allPhotos.PhotoCollection = ResizePhotoCollection(allPhotos.PhotoCollection, allPhotos.PhotoCollection.Length + 1);
                     allPhotos.PhotoCollection[allPhotos.PhotoCollection.Length - 1] = ph;
 
                     if (allPhotos.PhotoCollection.Length >= numToGet)
@@ -875,7 +896,7 @@ namespace FlickrDown
                 foreach (Photo ph in ps.PhotoCollection)
                 {
                     // allPhotos.PhotoCollection.Add(ph);
-                    allPhotos.PhotoCollection = (PhotoCollection)ResizeArray(allPhotos.PhotoCollection, allPhotos.PhotoCollection.Length + 1);
+                    allPhotos.PhotoCollection = ResizePhotoCollection(allPhotos.PhotoCollection, allPhotos.PhotoCollection.Length + 1);
                     allPhotos.PhotoCollection[allPhotos.PhotoCollection.Length - 1] = ph;
 
                     if (allPhotos.PhotoCollection.Length >= numToGet)
